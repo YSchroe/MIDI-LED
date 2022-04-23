@@ -19,7 +19,6 @@ unsigned int mode = 0;
 
 // Declaration for an SSD1306 display connected via I2C (SDA, SCL pins)
 Adafruit_SSD1306 display(128, 64, &Wire, -1);
-unsigned long lastDisplayRefresh = 0;
 
 /* LED STRIP CFG */
 #define NUM_LEDS 144
@@ -35,6 +34,12 @@ const char* notes[12] = {"C", "C#", "D", "D#", "E", "F",
 unsigned long pressedKeys[NO_OF_KEYS] = {};
 uint8_t cntPressedKeysPrevious = 0;
 uint8_t cntPressedKeysCurrent = 0;
+
+#define MENU_SIZE 4
+const char* menu[MENU_SIZE] = {"LED Modus", "Tonleiter", "Akkorde erkennen", "Option 4"};
+#define LINE_HEIGHT 8
+
+int cursor = 0;
 
 /* CALLBACK FUNCTIONS */
 void handleNoteOn(byte channel, byte pitch, byte velocity) {
@@ -68,31 +73,38 @@ void handleNoteOff(byte channel, byte pitch, byte velocity) {
     cntPressedKeysCurrent -= 1;
 }
 
-/* SETUP FUNCTIONS */
-void setupDisplay() {
-    if (!display.begin(SSD1306_SWITCHCAPVCC, 0x3C)) {
-        // endless loop in case display init fails
-        for (;;) {
+void handleButtonPress(ace_button::AceButton* button, uint8_t eventType, uint8_t buttonState) {
+    if (eventType == ace_button::AceButton::kEventPressed) {
+        // erase previous cursor:
+        display.fillRect(0, 0, 6, 64, BLACK);
+
+        if (button->getPin() == PIN_BTN_UP) {  // up
+            cursor++;
+            if (cursor > (MENU_SIZE - 1)) cursor = 0;
+        } else if (button->getPin() == PIN_BTN_DOWN) {  // down
+            cursor--;
+            if (cursor < 0) cursor = (MENU_SIZE - 1);
         }
+        // show cursor at new line:
+        display.setCursor(0, cursor * LINE_HEIGHT);
+        display.print('>');
+        display.display();
     }
-    delay(2000);
-    display.clearDisplay();
-
-    display.setTextSize(2);
-    display.setTextColor(WHITE);
-    display.display();
-}
-
-void setupLeds() {
-    FastLED.addLeds<NEOPIXEL, PIN_LED_DATA>(leds, NUM_LEDS);
-    FastLED.setBrightness(15);
-}
-
-void setupMidi() {
-    MIDI.setHandleNoteOn(handleNoteOn);
-    MIDI.setHandleNoteOff(handleNoteOff);
-    MIDI.begin();
-    MIDI.turnThruOff();
+    // switch (eventType) {
+    //     case ace_button::AceButton::kEventPressed:
+    //         if (button->getPin() == PIN_BTN_UP) {
+    //             mode = (mode + 1) % 3;
+    //         } else if (button->getPin() == PIN_BTN_DOWN) {
+    //             mode = (mode - 1) % 3;
+    //         }
+    //         switchMode(mode);
+    //         display.clearDisplay();
+    //         display.setCursor(0, 0);
+    //         display.print("Mode: ");
+    //         display.print(mode);
+    //         display.display();
+    //         break;
+    // }
 }
 
 // -----------------------------------------------------------------------------
@@ -147,34 +159,53 @@ void switchMode(uint8_t tgtMode) {
     }
 }
 
-void handleButtonPress(ace_button::AceButton* button, uint8_t eventType, uint8_t buttonState) {
-    switch (eventType) {
-        case ace_button::AceButton::kEventPressed:
-            if (button->getPin() == PIN_BTN_UP) {
-                mode = (mode + 1) % 3;
-            } else if (button->getPin() == PIN_BTN_DOWN) {
-                mode = (mode - 1) % 3;
-            }
-            switchMode(mode);
-            display.clearDisplay();
-            display.setCursor(0, 0);
-            display.print("Mode: ");
-            display.print(mode);
-            display.display();
-            break;
+/**
+ * Clear display and show the menu.
+ */
+void showMenu() {
+    cursor = 0;
+    display.clearDisplay();
+    // show menu items:
+    for (int i = 0; i < MENU_SIZE; i++) {
+        display.setCursor(6, i * LINE_HEIGHT);
+        display.print(menu[i]);
     }
+    display.setCursor(0, 0);
+    display.print('>');
+    display.display();
 }
 
 void setup() {
+    /* B U T T O N S */
     pinMode(PIN_BTN_UP, INPUT);
     pinMode(PIN_BTN_DOWN, INPUT);
     pinMode(PIN_BTN_OK, INPUT);
     ace_button::ButtonConfig* buttonConfig = ace_button::ButtonConfig::getSystemButtonConfig();
     buttonConfig->setEventHandler(handleButtonPress);
 
-    setupDisplay();
-    setupLeds();
-    setupMidi();
+    /* D I S P L A Y */
+    if (!display.begin(SSD1306_SWITCHCAPVCC, 0x3C)) {
+        // endless loop in case display init fails
+        for (;;) {
+        }
+    }
+    delay(1000);
+    display.clearDisplay();
+    display.setTextSize(1);
+    display.setTextColor(WHITE);
+    display.display();
+
+    /* L E D S */
+    FastLED.addLeds<NEOPIXEL, PIN_LED_DATA>(leds, NUM_LEDS);
+    FastLED.setBrightness(15);
+
+    /* M I D I*/
+    MIDI.setHandleNoteOn(handleNoteOn);
+    MIDI.setHandleNoteOff(handleNoteOff);
+    MIDI.begin();
+    MIDI.turnThruOff();
+
+    showMenu();
 }
 
 void loop() {
@@ -198,7 +229,7 @@ void loop() {
             // FastLED.show();
 
             // L C D
-            // if (millis() - lastDisplayRefresh > 100) {
+
             //     if (cntPressedKeysCurrent != cntPressedKeysPrevious) {
             //         display.clearDisplay();
             //         display.setCursor(0, 0);
@@ -210,9 +241,6 @@ void loop() {
             //         display.display();
             //         cntPressedKeysPrevious = cntPressedKeysCurrent;
             //     }
-
-            //     lastDisplayRefresh = millis();
-            // }
 
             break;
         case MODE_SHOW_SCALE:
