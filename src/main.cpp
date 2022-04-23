@@ -2,9 +2,11 @@
 #include <Adafruit_GFX.h>
 #include <Adafruit_SSD1306.h>
 #include <FastLED.h>
-#include <MidiCfg.h>
+#include <MIDI.h>
 #include <Pins.h>
 #include <Scales.h>
+
+MIDI_CREATE_DEFAULT_INSTANCE();
 
 ace_button::AceButton buttonUp(PIN_BTN_UP);
 ace_button::AceButton buttonDown(PIN_BTN_DOWN);
