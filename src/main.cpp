@@ -1,9 +1,14 @@
+#include <AceButton.h>
 #include <Adafruit_GFX.h>
 #include <Adafruit_SSD1306.h>
 #include <FastLED.h>
 #include <MidiCfg.h>
 #include <Pins.h>
 #include <Scales.h>
+
+ace_button::AceButton buttonUp(PIN_BTN_UP);
+ace_button::AceButton buttonDown(PIN_BTN_DOWN);
+ace_button::AceButton buttonOk(PIN_BTN_OK);
 
 Scale selectedScale = scales[0];
 
@@ -12,7 +17,7 @@ Scale selectedScale = scales[0];
 #define MODE_CHECK_SCALE 2
 unsigned int mode = 0;
 
-// Declaration for an SSD1306 display connected to I2C (SDA, SCL pins)
+// Declaration for an SSD1306 display connected via I2C (SDA, SCL pins)
 Adafruit_SSD1306 display(128, 64, &Wire, -1);
 unsigned long lastDisplayRefresh = 0;
 
@@ -31,15 +36,6 @@ unsigned long pressedKeys[NO_OF_KEYS] = {};
 uint8_t cntPressedKeysPrevious = 0;
 uint8_t cntPressedKeysCurrent = 0;
 
-bool btnUpPrev = LOW;
-bool btnUpCurr = LOW;
-
-bool btnDownPrev = LOW;
-bool btnDownCurr = LOW;
-
-bool btnOkPrev = LOW;
-bool btnOkCurr = LOW;
-
 /* CALLBACK FUNCTIONS */
 void handleNoteOn(byte channel, byte pitch, byte velocity) {
     byte correctedPitch = pitch - OFFSET;
@@ -57,7 +53,7 @@ void handleNoteOn(byte channel, byte pitch, byte velocity) {
     }
 
     leds[correctedPitch] = color;
-    // FastLED.show();
+    FastLED.show();
 
     pressedKeys[correctedPitch] = millis();
     cntPressedKeysCurrent += 1;
@@ -66,18 +62,18 @@ void handleNoteOn(byte channel, byte pitch, byte velocity) {
 void handleNoteOff(byte channel, byte pitch, byte velocity) {
     byte correctedPitch = pitch - OFFSET;
     leds[correctedPitch] = CRGB::Black;
-    // FastLED.show();
+    FastLED.show();
 
     pressedKeys[correctedPitch] = 0;
     cntPressedKeysCurrent -= 1;
 }
 
 /* SETUP FUNCTIONS */
-void setupLcd() {
+void setupDisplay() {
     if (!display.begin(SSD1306_SWITCHCAPVCC, 0x3C)) {
-        // Serial.println(F("SSD1306 allocation failed"));
-        for (;;)
-            ;
+        // endless loop in case display init fails
+        for (;;) {
+        }
     }
     delay(2000);
     display.clearDisplay();
@@ -151,77 +147,72 @@ void switchMode(uint8_t tgtMode) {
     }
 }
 
+void handleButtonPress(ace_button::AceButton* button, uint8_t eventType, uint8_t buttonState) {
+    switch (eventType) {
+        case ace_button::AceButton::kEventPressed:
+            if (button->getPin() == PIN_BTN_UP) {
+                mode = (mode + 1) % 3;
+            } else if (button->getPin() == PIN_BTN_DOWN) {
+                mode = (mode - 1) % 3;
+            }
+            switchMode(mode);
+            display.clearDisplay();
+            display.setCursor(0, 0);
+            display.print("Mode: ");
+            display.print(mode);
+            display.display();
+            break;
+    }
+}
+
 void setup() {
     pinMode(PIN_BTN_UP, INPUT);
     pinMode(PIN_BTN_DOWN, INPUT);
     pinMode(PIN_BTN_OK, INPUT);
+    ace_button::ButtonConfig* buttonConfig = ace_button::ButtonConfig::getSystemButtonConfig();
+    buttonConfig->setEventHandler(handleButtonPress);
 
-    setupLcd();
+    setupDisplay();
     setupLeds();
     setupMidi();
 }
 
 void loop() {
-    btnUpCurr = digitalRead(PIN_BTN_UP);
-    btnDownCurr = digitalRead(PIN_BTN_DOWN);
-    btnOkCurr = digitalRead(PIN_BTN_OK);
-    // display.clearDisplay();
-    // display.setCursor(0, 0);
-    // display.print(btnUpCurr);
-    // display.print(btnDownCurr);
-    // display.print(btnOkCurr);
-    // display.display();
-
-    if (btnUpPrev == LOW && btnUpCurr == HIGH) {
-        mode = (mode + 1) % 3;
-        switchMode(mode);
-        display.clearDisplay();
-        display.setCursor(0, 0);
-        display.print("Mode: ");
-        display.print(mode);
-        display.display();
-    }
-    if (btnDownPrev == LOW && btnDownCurr == HIGH) {
-        mode = (mode - 1) % 3;
-        switchMode(mode);
-        display.clearDisplay();
-        display.setCursor(0, 0);
-        display.print("Mode: ");
-        display.print(mode);
-        display.display();
-    }
+    buttonUp.check();
+    buttonDown.check();
+    buttonOk.check();
 
     switch (mode) {
         case MODE_MIDI_LED:
             MIDI.read();
 
-            FastLED.clear();
-            for (uint8_t i = 0; i < NO_OF_KEYS; i++) {
-                if (pressedKeys[i] != 0) {
-                    leds[constrain(i, 0, NUM_LEDS - 1)] = CRGB::Orange;
-                    uint8_t offs = floor((millis() - pressedKeys[i]) / 5);
-                    leds[constrain(i + offs, 0, NUM_LEDS - 1)] = CRGB::Red;
-                    leds[constrain(i - offs, 0, NUM_LEDS - 1)] = CRGB::Red;
-                }
-            }
-            FastLED.show();
+            // FastLED.clear();
+            // for (uint8_t i = 0; i < NO_OF_KEYS; i++) {
+            //     if (pressedKeys[i] != 0) {
+            //         leds[constrain(i, 0, NUM_LEDS - 1)] = CRGB::Orange;
+            //         uint8_t offs = floor((millis() - pressedKeys[i]) / 5);
+            //         leds[constrain(i + offs, 0, NUM_LEDS - 1)] = CRGB::Red;
+            //         leds[constrain(i - offs, 0, NUM_LEDS - 1)] = CRGB::Red;
+            //     }
+            // }
+            // FastLED.show();
 
             // L C D
-            if (millis() - lastDisplayRefresh > 100) {
-                if (cntPressedKeysCurrent != cntPressedKeysPrevious) {
-                    display.clearDisplay();
-                    display.setCursor(0, 0);
-                    for (uint8_t i = 0; i < NO_OF_KEYS; i++) {
-                        if (pressedKeys[i] != 0) {
-                            display.print(notes[(i + OFFSET) % 12]);
-                        }
-                    }
-                    display.display();
-                    cntPressedKeysPrevious = cntPressedKeysCurrent;
-                }
+            // if (millis() - lastDisplayRefresh > 100) {
+            //     if (cntPressedKeysCurrent != cntPressedKeysPrevious) {
+            //         display.clearDisplay();
+            //         display.setCursor(0, 0);
+            //         for (uint8_t i = 0; i < NO_OF_KEYS; i++) {
+            //             if (pressedKeys[i] != 0) {
+            //                 display.print(notes[(i + OFFSET) % 12]);
+            //             }
+            //         }
+            //         display.display();
+            //         cntPressedKeysPrevious = cntPressedKeysCurrent;
+            //     }
 
-                lastDisplayRefresh = millis();
-            }
+            //     lastDisplayRefresh = millis();
+            // }
 
             break;
         case MODE_SHOW_SCALE:
@@ -232,7 +223,4 @@ void loop() {
         default:
             break;
     }
-    btnUpPrev = btnUpCurr;
-    btnDownPrev = btnDownCurr;
-    btnOkPrev = btnOkCurr;
 }

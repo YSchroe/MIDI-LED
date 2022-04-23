@@ -3,5 +3,4 @@
 #define PIN_SDA 21
 #define PIN_BTN_UP 18
 #define PIN_BTN_DOWN 16
-#define PIN_BTN_OK 4
-#define PIN_BTN_BACK 2
+#define PIN_BTN_OK 2
