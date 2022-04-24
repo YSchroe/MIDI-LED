@@ -11,4 +11,7 @@ class Menu {
     void showMainMenu();
     void moveCursor(int direction);
     void execute();
+
+   private:
+    void showMenu();
 };
