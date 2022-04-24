@@ -16,7 +16,7 @@ SubMenu menus[] = {
 
 SubMenu* selectedMenu = &menus[0];
 
-Menu::Menu(Adafruit_SSD1306& disp) {
+Menu::Menu(Adafruit_SSD1306* disp) {
     m_display = disp;
 }
 
@@ -30,20 +30,20 @@ void Menu::showMainMenu() {
 
 void Menu::showMenu() {
     m_cursor = 0;
-    m_display.clearDisplay();
+    m_display->clearDisplay();
     // show menu items:
     for (int i = 0; i < selectedMenu->cntEntries; i++) {
-        m_display.setCursor(6, i * LINE_HEIGHT);
-        m_display.print(selectedMenu->entries[i]);
+        m_display->setCursor(6, i * LINE_HEIGHT);
+        m_display->print(selectedMenu->entries[i]);
     }
 
     // add "Zurück" entry
-    m_display.setCursor(6, selectedMenu->cntEntries * LINE_HEIGHT);
-    m_display.print("--Zurueck");
+    m_display->setCursor(6, selectedMenu->cntEntries * LINE_HEIGHT);
+    m_display->print("--Zurueck");
 
-    m_display.setCursor(0, 0);
-    m_display.print('>');
-    m_display.display();
+    m_display->setCursor(0, 0);
+    m_display->print('>');
+    m_display->display();
 }
 
 void Menu::moveCursor(int direction) {
@@ -51,16 +51,16 @@ void Menu::moveCursor(int direction) {
     int cntEntries = selectedMenu->cntEntries + 1;
 
     // erase previous cursor:
-    m_display.fillRect(0, 0, 6, 64, BLACK);
+    m_display->fillRect(0, 0, 6, 64, BLACK);
 
     // move cursor
     m_cursor = m_cursor + direction;
     m_cursor = (m_cursor % cntEntries + cntEntries) % cntEntries;
 
     // show cursor at new line:
-    m_display.setCursor(0, m_cursor * LINE_HEIGHT);
-    m_display.print('>');
-    m_display.display();
+    m_display->setCursor(0, m_cursor * LINE_HEIGHT);
+    m_display->print('>');
+    m_display->display();
 }
 
 void Menu::execute() {

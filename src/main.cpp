@@ -82,7 +82,7 @@ void handleButtonPress(ace_button::AceButton* button, uint8_t eventType, uint8_t
         } else if (button->getPin() == PIN_BTN_DOWN) {
             menu.moveCursor(-1);
         } else if (button->getPin() == PIN_BTN_OK) {
-            menu.showMainMenu();
+            menu.execute();
         }
     }
 }
