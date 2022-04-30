@@ -1,8 +1,9 @@
-#include <Menu.h>
+#include "Menu.h"
 
-MenuComponent::MenuComponent() {
-}
+#define LINE_HEIGHT 8
 
+// === MENU COMPONENT ===
+MenuComponent::MenuComponent() {}
 MenuComponent::MenuComponent(const char* name) {
     m_name = name;
 }
@@ -19,24 +20,94 @@ const char* MenuComponent::getName() {
     return m_name;
 }
 
-Menu::Menu(const char* name) : MenuComponent(name) {
-}
+// === SUBMENU ===
+SubMenu::SubMenu(const char* name) : MenuComponent(name) {}
 
-LinkedList<MenuComponent>& Menu::getChildren() {
+LinkedList<MenuComponent>& SubMenu::getChildren() {
     return m_children;
 }
 
-Leaf::Leaf(const char* name) : MenuComponent(name) {
-}
-
-int Menu::addChild(MenuComponent& item) {
+int SubMenu::addChild(MenuComponent& item) {
     item.setParent(this);
     m_children.add(item);
 
     return m_children.size();
 }
 
-// #define LINE_HEIGHT 8
+int SubMenu::moveCursor(int direction) {
+    // entries = entries + 1 (since "Zurueck" is added implicitly)
+    int cntEntries = m_children.size();  //+ 1;
+    m_selectedEntry += direction;
+    m_selectedEntry = (m_selectedEntry % cntEntries + cntEntries) % cntEntries;
+    return m_selectedEntry;
+}
+
+int SubMenu::getSelectedEntry() {
+    return m_selectedEntry;
+}
+
+// === LEAF ===
+Leaf::Leaf(const char* name) : MenuComponent(name) {}
+
+// ==MENU==
+Menu::Menu(Adafruit_SSD1306* disp) {
+    m_display = disp;
+}
+
+void Menu::setMenuTree(SubMenu* menuTree) {
+    m_menuTree = menuTree;
+    m_currentMenu = m_menuTree;
+}
+
+void Menu::showMainMenu() {
+    m_currentMenu = m_menuTree;
+    showMenu();
+}
+
+void Menu::showMenu() {
+    m_currentMenu->getChildren().size();
+    m_display->clearDisplay();
+    m_display->setCursor(0, 0);
+    m_display->print("==");
+    m_display->print(m_currentMenu->getName());
+    m_display->print("==");
+
+    int yPos = LINE_HEIGHT;
+
+    for (int i = 0; i < m_currentMenu->getChildren().size(); i += 1) {
+        m_display->setCursor(0, yPos);
+        if (i == m_currentMenu->getSelectedEntry())
+            m_display->print(">");
+        else
+            m_display->print(" ");
+        m_display->print(m_currentMenu->getChildren().get(i).getName());
+        yPos += LINE_HEIGHT;
+    }
+
+    m_display->display();
+}
+
+void Menu::moveCursor(int direction) {
+    // erase previous cursor:
+    m_display->fillRect(0, LINE_HEIGHT, 6, 64, BLACK);
+
+    // move cursor
+    int newPos = m_currentMenu->moveCursor(direction);
+    m_display->clearDisplay();
+    m_display->setCursor(0, 0);
+    m_display->print(newPos);
+    m_display->print(direction);
+
+    // show cursor at new line:
+    m_display->setCursor(0, LINE_HEIGHT + newPos * LINE_HEIGHT);
+    m_display->print('>');
+    m_display->display();
+}
+
+void Menu::selectEntry() {
+}
+
+//
 
 // struct SubMenu {
 //     const char* name;

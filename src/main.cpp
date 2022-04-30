@@ -82,7 +82,7 @@ void handleButtonPress(ace_button::AceButton* button, uint8_t eventType, uint8_t
         } else if (button->getPin() == PIN_BTN_DOWN) {
             menu.moveCursor(-1);
         } else if (button->getPin() == PIN_BTN_OK) {
-            menu.execute();
+            // menu.execute();
         }
     }
 }
@@ -170,34 +170,16 @@ void setup() {
     MIDI.begin();
     MIDI.turnThruOff();
 
-    Menu mainMenu("MAIN MENU");
+    SubMenu mainMenu("MAIN MENU");
     Leaf leaf1("A MENU LEAF");
-
-    Menu subMenu1("SUB MENU 1");
+    SubMenu subMenu1("SUB MENU 1");
     Leaf leaf2("A SUBMENU LEAF");
     subMenu1.addChild(leaf2);
-
     mainMenu.addChild(subMenu1);
     mainMenu.addChild(leaf1);
+    menu.setMenuTree(&mainMenu);
 
-    mainMenu.getChildren().size();
-
-    display.print("==");
-    display.print(mainMenu.getName());
-    display.print("==");
-
-    int yPos = 8;
-
-    for (int i = 0; i < mainMenu.getChildren().size(); i += 1) {
-        display.setCursor(0, yPos);
-        display.print(i);
-        display.print(" ");
-        display.print(mainMenu.getChildren().get(i).getName());
-        yPos += 8;
-        Serial.println(i);
-    }
-
-    display.display();
+    menu.showMainMenu();
 }
 
 void loop() {
