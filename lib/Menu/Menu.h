@@ -3,61 +3,64 @@
 #include <Adafruit_SSD1306.h>
 #include <LinkedList.h>
 
-// class Menu {
-//     Adafruit_SSD1306* m_display;
-//     int m_cursor = 0;
-
-//    public:
-//     Menu(Adafruit_SSD1306* disp);
-//     void showMainMenu();
-//     void moveCursor(int direction);
-//     void execute();
-
-//    private:
-//     void showMenu();
-// };
+typedef void (*func_t)();
 
 class MenuComponent {
     const char* m_name;
     MenuComponent* m_parent;
 
    public:
-    MenuComponent();
-    MenuComponent(const char* name);
+    int m_selectedIndex = 0;
 
-    virtual const char* getName();
-    virtual MenuComponent& getParent();
-    virtual void setParent(MenuComponent* parent);
-    // virtual void execute();
+   public:
+    MenuComponent(const char* name) : m_name(name){};
+
+    const char* getName() { return m_name; };
+    void setParent(MenuComponent* parent) { m_parent = parent; };
+    MenuComponent* getParent() { return m_parent; };
+    int getSelectedIndex() { return m_selectedIndex; };
+
+    virtual LinkedList<MenuComponent*>* getChildren() { return nullptr; };
+    virtual MenuComponent* getSelectedComponent() { return nullptr; };
+    virtual int addChild(MenuComponent* child) { return -1; };
+    virtual int moveCursor(int direction) { return -1; };
+    virtual int isLeaf() { return false; };
+    virtual void execute(){};
 };
 
 class SubMenu : public MenuComponent {
    private:
-    LinkedList<MenuComponent> m_children;
-    int m_selectedEntry = 0;
+    LinkedList<MenuComponent*> m_children;
 
    public:
-    SubMenu(const char* name);
-    int addChild(MenuComponent& a);
+    SubMenu(const char* name) : MenuComponent(name){};
+
+    LinkedList<MenuComponent*>* getChildren() { return &m_children; };
+    MenuComponent* getSelectedComponent() { return m_children.get(m_selectedIndex); }
+    int addChild(MenuComponent* child);
     int moveCursor(int direction);
-    int getSelectedEntry();
-    LinkedList<MenuComponent>& getChildren();
 };
 
 class Leaf : public MenuComponent {
+    func_t m_func;
+
    public:
-    Leaf(const char* name);
+    Leaf(const char* name, func_t func) : MenuComponent(name), m_func(func){};
+    int isLeaf() { return true; };
+    void execute() {
+        if (m_func) m_func();
+    }
 };
 
 class Menu {
-    SubMenu* m_menuTree;
-    SubMenu* m_currentMenu;
+    MenuComponent* m_menuTree;
+    MenuComponent* m_currentMenu;
 
     Adafruit_SSD1306* m_display;
 
    public:
-    Menu(Adafruit_SSD1306* disp);
-    void setMenuTree(SubMenu* menuTree);
+    Menu(Adafruit_SSD1306* disp) : m_display(disp){};
+    void setMenuTree(MenuComponent* menuTree);
     void showMainMenu();
     void moveCursor(int direction);
     void selectEntry();

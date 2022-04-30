@@ -139,6 +139,9 @@ void switchMode(LedMode tgtMode) {
     }
 }
 
+void testFunc() {
+}
+
 void setup() {
     /* B U T T O N S */
     pinMode(PIN_BTN_UP, INPUT);
@@ -170,14 +173,18 @@ void setup() {
     MIDI.begin();
     MIDI.turnThruOff();
 
-    SubMenu mainMenu("MAIN MENU");
-    Leaf leaf1("A MENU LEAF");
-    SubMenu subMenu1("SUB MENU 1");
-    Leaf leaf2("A SUBMENU LEAF");
-    subMenu1.addChild(leaf2);
-    mainMenu.addChild(subMenu1);
-    mainMenu.addChild(leaf1);
-    menu.setMenuTree(&mainMenu);
+    /* M E N U */
+    SubMenu* mainMenu = new SubMenu("MAIN MENU");
+    Leaf* leaf1 = new Leaf("A MENU LEAF", testFunc);
+
+    SubMenu* subMenu1 = new SubMenu("SUB MENU 1");
+    Leaf* leaf2 = new Leaf("A SUBMENU LEAF", nullptr);
+    subMenu1->addChild(leaf2);
+
+    mainMenu->addChild(subMenu1);
+    mainMenu->addChild(leaf1);
+
+    menu.setMenuTree(mainMenu);
 
     menu.showMainMenu();
 }

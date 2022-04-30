@@ -8,3 +8,5 @@ Wiring based on [this thread](https://electronics.stackexchange.com/questions/31
 
 https://wokwi.com/projects/330343896644059730
 https://wokwi.com/projects/330358785722810962
+https://wokwi.com/projects/330368555090444883
+https://wokwi.com/projects/330368555090444883
