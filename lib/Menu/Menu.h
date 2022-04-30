@@ -1,17 +1,45 @@
 #pragma once
 #include <Adafruit_GFX.h>
 #include <Adafruit_SSD1306.h>
+#include <LinkedList.h>
 
-class Menu {
-    Adafruit_SSD1306* m_display;
-    int m_cursor = 0;
+// class Menu {
+//     Adafruit_SSD1306* m_display;
+//     int m_cursor = 0;
+
+//    public:
+//     Menu(Adafruit_SSD1306* disp);
+//     void showMainMenu();
+//     void moveCursor(int direction);
+//     void execute();
+
+//    private:
+//     void showMenu();
+// };
+
+class MenuComponent {
+    const char* m_name;
+    MenuComponent* m_parent;
 
    public:
-    Menu(Adafruit_SSD1306* disp);
-    void showMainMenu();
-    void moveCursor(int direction);
-    void execute();
+    MenuComponent();
+    MenuComponent(const char* name);
+    virtual const char* getName();
+    virtual void setParent(MenuComponent* parent);
+    virtual MenuComponent& getParent();
+};
 
-   private:
-    void showMenu();
+class Menu : public MenuComponent {
+    LinkedList<MenuComponent> m_children;
+    int selectedEntry = 0;
+
+   public:
+    Menu(const char* name);
+    int addChild(MenuComponent& a);
+    LinkedList<MenuComponent>& getChildren();
+};
+
+class Leaf : public MenuComponent {
+   public:
+    Leaf(const char* name);
 };

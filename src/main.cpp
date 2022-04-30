@@ -27,7 +27,7 @@ ace_button::AceButton buttonOk(PIN_BTN_OK);
 Scale selectedScale = scales[0];
 
 // Declaration for an SSD1306 display connected via I2C (SDA, SCL pins)
-Adafruit_SSD1306 display(128, 64, &Wire, -1);
+Adafruit_SSD1306 display(128, 64, &Wire);
 Menu menu(&display);
 
 /* LED STRIP CFG */
@@ -169,6 +169,35 @@ void setup() {
     MIDI.setHandleNoteOff(handleNoteOff);
     MIDI.begin();
     MIDI.turnThruOff();
+
+    Menu mainMenu("MAIN MENU");
+    Leaf leaf1("A MENU LEAF");
+
+    Menu subMenu1("SUB MENU 1");
+    Leaf leaf2("A SUBMENU LEAF");
+    subMenu1.addChild(leaf2);
+
+    mainMenu.addChild(subMenu1);
+    mainMenu.addChild(leaf1);
+
+    mainMenu.getChildren().size();
+
+    display.print("==");
+    display.print(mainMenu.getName());
+    display.print("==");
+
+    int yPos = 8;
+
+    for (int i = 0; i < mainMenu.getChildren().size(); i += 1) {
+        display.setCursor(0, yPos);
+        display.print(i);
+        display.print(" ");
+        display.print(mainMenu.getChildren().get(i).getName());
+        yPos += 8;
+        Serial.println(i);
+    }
+
+    display.display();
 }
 
 void loop() {
