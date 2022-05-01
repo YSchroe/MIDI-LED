@@ -1,5 +1,7 @@
 #pragma once
 #include <LinkedList.h>
+
+#include <functional>
 typedef void (*func_t)();
 
 class MenuComponent {
@@ -40,10 +42,10 @@ class SubMenu : public MenuComponent {
 };
 
 class Leaf : public MenuComponent {
-    func_t m_func;
+    std::function<void()> m_func;
 
    public:
-    Leaf(const char* name, func_t func) : MenuComponent(name), m_func(func){};
+    Leaf(const char* name, std::function<void()> func = nullptr) : MenuComponent(name), m_func(func){};
     void execute() {
         if (m_func) m_func();
     }

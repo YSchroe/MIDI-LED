@@ -6,6 +6,9 @@
 #include <Menu.h>
 #include <Pins.h>
 #include <Scales.h>
+#include <Setting.h>
+
+SettingGroup<int, 12> baseNote(notes);
 
 enum LedMode : unsigned int {
     LED_MODE_MIDI_LED = 0,
@@ -139,13 +142,6 @@ void switchMode(LedMode tgtMode) {
     }
 }
 
-void testFunc() {
-}
-
-void menuGoBack() {
-    menu.goBack();
-}
-
 void setup() {
     /* B U T T O N S */
     pinMode(PIN_BTN_UP, INPUT);
@@ -178,20 +174,20 @@ void setup() {
     MIDI.turnThruOff();
 
     /* M E N U */
-    Leaf* backButton = new Leaf("BACK", menuGoBack);
+    Leaf* backButton = new Leaf("BACK", []() { menu.goBack(); });
     SubMenu* mainMenu = new SubMenu("HAUPTMENU");
     SubMenu* subMenu1 = new SubMenu("UNTERMENU 1");
     SubMenu* subMenu2 = new SubMenu("UNTERMENU 2");
-    subMenu1->addChild(new Leaf("Eine Option", nullptr));
+    subMenu1->addChild(new Leaf("Eine Option"));
     subMenu1->addChild(backButton);
 
-    subMenu2->addChild(new Leaf("Eine Option", nullptr));
-    subMenu2->addChild(new Leaf("Noch eine Option", nullptr));
+    subMenu2->addChild(new Leaf("Eine Option"));
+    subMenu2->addChild(new Leaf("Noch eine Option"));
     subMenu2->addChild(backButton);
 
     mainMenu->addChild(subMenu1);
     mainMenu->addChild(subMenu2);
-    mainMenu->addChild(new Leaf("Eine Option", testFunc));
+    mainMenu->addChild(new Leaf("Eine Option"));
     mainMenu->addChild(backButton);
 
     menu.setMenuTree(mainMenu);
