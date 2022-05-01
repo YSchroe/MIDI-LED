@@ -2,24 +2,6 @@
 
 #define LINE_HEIGHT 8
 
-// === SUBMENU ===
-int SubMenu::addChild(MenuComponent* child) {
-    child->setParent(this);
-    m_children.add(child);
-
-    return m_children.size();
-}
-
-int SubMenu::moveCursor(int direction) {
-    // entries = entries + 1 (since "Zurueck" is added implicitly)
-    int cntEntries = m_children.size();  //+ 1;
-    m_selectedIndex += direction;
-    m_selectedIndex = (m_selectedIndex % cntEntries + cntEntries) % cntEntries;
-    return m_selectedIndex;
-}
-
-// === LEAF ===
-
 // ==MENU==
 void Menu::setMenuTree(MenuComponent* menuTree) {
     m_menuTree = menuTree;
@@ -32,7 +14,6 @@ void Menu::showMainMenu() {
 }
 
 void Menu::showMenu() {
-    m_currentMenu->getChildren()->size();
     m_display->clearDisplay();
     m_display->setCursor(0, 0);
     m_display->print("==");
@@ -41,7 +22,7 @@ void Menu::showMenu() {
 
     int yPos = LINE_HEIGHT;
 
-    for (int i = 0; i < m_currentMenu->getChildren()->size(); i += 1) {
+    for (int i = 0; i < m_currentMenu->getChildCount(); i += 1) {
         m_display->setCursor(0, yPos);
         if (i == m_currentMenu->getSelectedIndex())
             m_display->print(">");
@@ -71,15 +52,18 @@ void Menu::moveCursor(int direction) {
 
 void Menu::selectEntry() {
     MenuComponent* selectedEntry = m_currentMenu->getSelectedComponent();
-    if (!selectedEntry->isLeaf()) {
+    if (selectedEntry->getChildCount() > 0) {
         m_currentMenu = selectedEntry;
         showMenu();
     } else {
         selectedEntry->execute();
-        MenuComponent* parent = m_currentMenu->getParent();
-        if (parent) {
-            m_currentMenu = parent;
-            showMenu();
-        }
+    }
+}
+
+void Menu::goBack() {
+    MenuComponent* parent = m_currentMenu->getParent();
+    if (parent) {
+        m_currentMenu = parent;
+        showMenu();
     }
 }

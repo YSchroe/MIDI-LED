@@ -78,11 +78,11 @@ void handleNoteOff(byte channel, byte pitch, byte velocity) {
 void handleButtonPress(ace_button::AceButton* button, uint8_t eventType, uint8_t buttonState) {
     if (eventType == ace_button::AceButton::kEventPressed) {
         if (button->getPin() == PIN_BTN_UP) {
-            menu.moveCursor(1);
-        } else if (button->getPin() == PIN_BTN_DOWN) {
             menu.moveCursor(-1);
+        } else if (button->getPin() == PIN_BTN_DOWN) {
+            menu.moveCursor(1);
         } else if (button->getPin() == PIN_BTN_OK) {
-            // menu.execute();
+            menu.selectEntry();
         }
     }
 }
@@ -142,6 +142,10 @@ void switchMode(LedMode tgtMode) {
 void testFunc() {
 }
 
+void menuGoBack() {
+    menu.goBack();
+}
+
 void setup() {
     /* B U T T O N S */
     pinMode(PIN_BTN_UP, INPUT);
@@ -174,15 +178,21 @@ void setup() {
     MIDI.turnThruOff();
 
     /* M E N U */
-    SubMenu* mainMenu = new SubMenu("MAIN MENU");
-    Leaf* leaf1 = new Leaf("A MENU LEAF", testFunc);
+    Leaf* backButton = new Leaf("BACK", menuGoBack);
+    SubMenu* mainMenu = new SubMenu("HAUPTMENU");
+    SubMenu* subMenu1 = new SubMenu("UNTERMENU 1");
+    SubMenu* subMenu2 = new SubMenu("UNTERMENU 2");
+    subMenu1->addChild(new Leaf("Eine Option", nullptr));
+    subMenu1->addChild(backButton);
 
-    SubMenu* subMenu1 = new SubMenu("SUB MENU 1");
-    Leaf* leaf2 = new Leaf("A SUBMENU LEAF", nullptr);
-    subMenu1->addChild(leaf2);
+    subMenu2->addChild(new Leaf("Eine Option", nullptr));
+    subMenu2->addChild(new Leaf("Noch eine Option", nullptr));
+    subMenu2->addChild(backButton);
 
     mainMenu->addChild(subMenu1);
-    mainMenu->addChild(leaf1);
+    mainMenu->addChild(subMenu2);
+    mainMenu->addChild(new Leaf("Eine Option", testFunc));
+    mainMenu->addChild(backButton);
 
     menu.setMenuTree(mainMenu);
 
