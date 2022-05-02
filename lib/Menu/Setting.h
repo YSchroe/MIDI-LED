@@ -21,7 +21,11 @@ class SettingGroup {
     int m_selectedOption = 0;
 
    public:
-    SettingGroup(NamedValue<T> options[size]) : m_options(options){};
+    SettingGroup(NamedValue<T> options[size]) {
+        for (int i = 0; i < size; i++) {
+            m_options[i] = options[i];
+        }
+    };
     SettingGroup(const char* values[size]) {
         for (int i = 0; i < size; i++) {
             m_options[i] = NamedValue<int>{values[i], i};
@@ -38,8 +42,8 @@ class SettingGroup {
         return m_options[m_selectedOption].value;
     }
 
-    SubMenu* createSettingsMenu() {
-        SubMenu* menu = new SubMenu("BaseNote");
+    SubMenu* createSettingsMenu(const char* name) {
+        SubMenu* menu = new SubMenu(name);
         for (int i = 0; i < size; i++) {
             menu->addChild(new Leaf(m_options[i].name, [this, i]() { selectOption(i); }));
         }

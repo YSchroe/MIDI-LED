@@ -5,10 +5,22 @@
 #include <MIDI.h>
 #include <Menu.h>
 #include <Pins.h>
-#include <Scales.h>
 #include <Setting.h>
 
-SettingGroup<int, 12> baseNote(notes);
+struct Scale {
+    unsigned int length;
+    unsigned int notes[10];
+};
+
+const char* notes[] = {"C", "C#", "D", "D#", "E", "F",
+                       "F#", "G", "G#", "A", "A#", "H"};
+
+NamedValue<Scale> scaleValues[] = {
+    NamedValue<Scale>{"Major", Scale{7, {0, 2, 4, 5, 7, 9, 11}}},
+    NamedValue<Scale>{"Minor", Scale{7, {0, 2, 3, 5, 7, 8, 10}}}};
+
+SettingGroup<int, 12> baseNotes(notes);
+SettingGroup<Scale, 2> scales(scaleValues);
 
 enum LedMode : unsigned int {
     LED_MODE_MIDI_LED = 0,
@@ -27,12 +39,9 @@ ace_button::AceButton buttonUp(PIN_BTN_UP);
 ace_button::AceButton buttonDown(PIN_BTN_DOWN);
 ace_button::AceButton buttonOk(PIN_BTN_OK);
 
-Scale selectedScale = scales[0];
-
 // Declaration for an SSD1306 display connected via I2C (SDA, SCL pins)
 Adafruit_SSD1306 display(128, 64, &Wire);
 Menu menu(&display);
-
 /* LED STRIP CFG */
 #define NUM_LEDS 144
 CRGB leds[NUM_LEDS];
@@ -54,8 +63,8 @@ void handleNoteOn(byte channel, byte pitch, byte velocity) {
         color = CRGB::BlueViolet;
     } else {
         color = CRGB::Red;
-        for (uint8_t i = 0; i < selectedScale.length; i++) {
-            if ((correctedPitch % 12) == selectedScale.notes[i]) {
+        for (uint8_t i = 0; i < scales.getSelectedValue().length; i++) {
+            if ((correctedPitch % 12) == scales.getSelectedValue().notes[i]) {
                 color = CRGB::Green;
                 break;
             }
@@ -91,31 +100,31 @@ void handleButtonPress(ace_button::AceButton* button, uint8_t eventType, uint8_t
 }
 
 // -----------------------------------------------------------------------------
-void setScale(const char* scaleName) {
-    FastLED.clear(true);
-    for (uint8_t i = 0; i < sizeof(scales); i++) {
-        if (scales[i].name == scaleName) {
-            selectedScale = scales[i];
-            break;
-        }
-    }
+// void setScale(const char* scaleName) {
+//     FastLED.clear(true);
+//     for (uint8_t i = 0; i < sizeof(scales); i++) {
+//         if (scales[i].name == scaleName) {
+//             selectedScale = scales[i];
+//             break;
+//         }
+//     }
 
-    if (settings.ledMode == LedMode::LED_MODE_SHOW_SCALE) {
-        for (uint8_t i = 0; i < selectedScale.length; i++) {
-            uint8_t note = selectedScale.notes[i];
-            while (note < NUM_LEDS) {
-                uint8_t octave = ceil(note / 12);
-                leds[note].setRGB(255 - 20 * octave, 0 + 20 * octave, 0 + 20 * octave);
-                note += 12;
-            }
-        }
-        FastLED.show();
-    }
+//     if (settings.ledMode == LedMode::LED_MODE_SHOW_SCALE) {
+//         for (uint8_t i = 0; i < selectedScale.length; i++) {
+//             uint8_t note = selectedScale.notes[i];
+//             while (note < NUM_LEDS) {
+//                 uint8_t octave = ceil(note / 12);
+//                 leds[note].setRGB(255 - 20 * octave, 0 + 20 * octave, 0 + 20 * octave);
+//                 note += 12;
+//             }
+//         }
+//         FastLED.show();
+//     }
 
-    display.clearDisplay();
-    display.setCursor(0, 0);
-    display.print(scaleName);
-}
+//     display.clearDisplay();
+//     display.setCursor(0, 0);
+//     display.print(scaleName);
+// }
 
 void switchMode(LedMode tgtMode) {
     MIDI.disconnectCallbackFromType(MIDI_NAMESPACE::MidiType::NoteOn);
@@ -129,12 +138,12 @@ void switchMode(LedMode tgtMode) {
             MIDI.setHandleNoteOff(handleNoteOff);
             break;
         case LedMode::LED_MODE_SHOW_SCALE:
-            setScale("Major");
+            // setScale("Major");
             break;
         case LedMode::LED_MODE_CHECK_SCALE:
             MIDI.setHandleNoteOn(handleNoteOn);
             MIDI.setHandleNoteOff(handleNoteOff);
-            setScale("Minor");
+            // setScale("Minor");
             break;
 
         default:
@@ -177,16 +186,18 @@ void setup() {
     Leaf* backButton = new Leaf("BACK", []() { menu.goBack(); });
     SubMenu* mainMenu = new SubMenu("HAUPTMENU");
     SubMenu* subMenu1 = new SubMenu("UNTERMENU 1");
-    SubMenu* subMenu2 = new SubMenu("UNTERMENU 2");
     subMenu1->addChild(new Leaf("Eine Option"));
     subMenu1->addChild(backButton);
 
-    subMenu2->addChild(new Leaf("Eine Option"));
-    subMenu2->addChild(new Leaf("Noch eine Option"));
-    subMenu2->addChild(backButton);
+    SubMenu* scaleMenu = scales.createSettingsMenu("SCALE");
+    scaleMenu->addChild(backButton);
+
+    SubMenu* baseNoteMenu = baseNotes.createSettingsMenu("BASE NOTE");
+    baseNoteMenu->addChild(backButton);
 
     mainMenu->addChild(subMenu1);
-    mainMenu->addChild(subMenu2);
+    mainMenu->addChild(scaleMenu);
+    mainMenu->addChild(baseNoteMenu);
     mainMenu->addChild(new Leaf("Eine Option"));
     mainMenu->addChild(backButton);
 
