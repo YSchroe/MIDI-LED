@@ -2,7 +2,6 @@
 #include <LinkedList.h>
 
 #include <functional>
-typedef void (*func_t)();
 
 class MenuComponent {
     const char* m_name;

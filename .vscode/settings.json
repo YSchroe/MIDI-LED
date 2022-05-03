@@ -6,7 +6,8 @@
 		"unordered_map": "cpp",
 		"unordered_set": "cpp",
 		"vector": "cpp",
-		"system_error": "cpp"
+		"system_error": "cpp",
+		"new": "cpp"
 	},
 	"[cpp]": {
 		"editor.defaultFormatter": "ms-vscode.cpptools"

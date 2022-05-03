@@ -14,11 +14,13 @@ struct Scale {
 
 const char* notes[] = {"C", "C#", "D", "D#", "E", "F",
                        "F#", "G", "G#", "A", "A#", "H"};
+const char* modeVals[] = {"MIDI LED", "Show Scale", "Check Scale"};
 
 NamedValue<Scale> scaleValues[] = {
     NamedValue<Scale>{"Major", Scale{7, {0, 2, 4, 5, 7, 9, 11}}},
     NamedValue<Scale>{"Minor", Scale{7, {0, 2, 3, 5, 7, 8, 10}}}};
 
+SettingGroup<int, 3> modes(modeVals);
 SettingGroup<int, 12> baseNotes(notes);
 SettingGroup<Scale, 2> scales(scaleValues);
 
@@ -30,7 +32,6 @@ enum LedMode : unsigned int {
 
 struct Settings {
     bool showNotesInDisplay = true;
-    LedMode ledMode = LedMode::LED_MODE_MIDI_LED;
 } settings;
 
 MIDI_CREATE_DEFAULT_INSTANCE();
@@ -59,7 +60,7 @@ uint8_t cntPressedKeysCurrent = 0;
 void handleNoteOn(byte channel, byte pitch, byte velocity) {
     byte correctedPitch = pitch - OFFSET;
     CRGB color;
-    if (settings.ledMode == LedMode::LED_MODE_MIDI_LED) {
+    if (modes.getSelectedValue() == LedMode::LED_MODE_MIDI_LED) {
         color = CRGB::BlueViolet;
     } else {
         color = CRGB::Red;
@@ -126,13 +127,13 @@ void handleButtonPress(ace_button::AceButton* button, uint8_t eventType, uint8_t
 //     display.print(scaleName);
 // }
 
-void switchMode(LedMode tgtMode) {
+void switchToNewMode() {
     MIDI.disconnectCallbackFromType(MIDI_NAMESPACE::MidiType::NoteOn);
     MIDI.disconnectCallbackFromType(MIDI_NAMESPACE::MidiType::NoteOff);
 
     FastLED.clear(true);
 
-    switch (tgtMode) {
+    switch (modes.getSelectedValue()) {
         case LedMode::LED_MODE_MIDI_LED:
             MIDI.setHandleNoteOn(handleNoteOn);
             MIDI.setHandleNoteOff(handleNoteOff);
@@ -183,11 +184,14 @@ void setup() {
     MIDI.turnThruOff();
 
     /* M E N U */
-    Leaf* backButton = new Leaf("BACK", []() { menu.goBack(); });
-    SubMenu* mainMenu = new SubMenu("HAUPTMENU");
-    SubMenu* subMenu1 = new SubMenu("UNTERMENU 1");
-    subMenu1->addChild(new Leaf("Eine Option"));
-    subMenu1->addChild(backButton);
+
+    SubMenu& mainMenu = menu.getMenuTree();
+    Leaf* backButton = new Leaf("BACK", []() {
+        menu.goBack();
+    });
+
+    SubMenu* modeMenu = modes.createSettingsMenu("MODE", switchToNewMode);
+    modeMenu->addChild(backButton);
 
     SubMenu* scaleMenu = scales.createSettingsMenu("SCALE");
     scaleMenu->addChild(backButton);
@@ -195,13 +199,11 @@ void setup() {
     SubMenu* baseNoteMenu = baseNotes.createSettingsMenu("BASE NOTE");
     baseNoteMenu->addChild(backButton);
 
-    mainMenu->addChild(subMenu1);
-    mainMenu->addChild(scaleMenu);
-    mainMenu->addChild(baseNoteMenu);
-    mainMenu->addChild(new Leaf("Eine Option"));
-    mainMenu->addChild(backButton);
-
-    menu.setMenuTree(mainMenu);
+    mainMenu.addChild(modeMenu);
+    mainMenu.addChild(scaleMenu);
+    mainMenu.addChild(baseNoteMenu);
+    mainMenu.addChild(new Leaf("Eine Option"));
+    mainMenu.addChild(backButton);
 
     menu.showMainMenu();
 }
@@ -211,7 +213,7 @@ void loop() {
     buttonDown.check();
     buttonOk.check();
 
-    switch (settings.ledMode) {
+    switch (modes.getSelectedValue()) {
         case LedMode::LED_MODE_MIDI_LED:
             MIDI.read();
 

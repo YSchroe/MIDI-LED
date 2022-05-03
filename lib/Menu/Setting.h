@@ -42,10 +42,13 @@ class SettingGroup {
         return m_options[m_selectedOption].value;
     }
 
-    SubMenu* createSettingsMenu(const char* name) {
+    SubMenu* createSettingsMenu(const char* name, std::function<void()> callback = nullptr) {
         SubMenu* menu = new SubMenu(name);
         for (int i = 0; i < size; i++) {
-            menu->addChild(new Leaf(m_options[i].name, [this, i]() { selectOption(i); }));
+            menu->addChild(new Leaf(m_options[i].name, [this, callback, i]() {
+                selectOption(i);
+                if (callback) callback();
+            }));
         }
         return menu;
     }

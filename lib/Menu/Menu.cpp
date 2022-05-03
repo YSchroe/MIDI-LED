@@ -3,13 +3,16 @@
 #define LINE_HEIGHT 8
 
 // ==MENU==
-void Menu::setMenuTree(MenuComponent* menuTree) {
-    m_menuTree = menuTree;
-    m_currentMenu = m_menuTree;
+Menu::Menu(Adafruit_SSD1306* disp) : m_display(disp),
+                                     m_menuTree("MAIN MENU"),
+                                     m_currentMenu(&m_menuTree) {}
+
+SubMenu& Menu::getMenuTree() {
+    return m_menuTree;
 }
 
 void Menu::showMainMenu() {
-    m_currentMenu = m_menuTree;
+    m_currentMenu = &m_menuTree;
     showMenu();
 }
 
