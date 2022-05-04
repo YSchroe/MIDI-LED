@@ -33,6 +33,7 @@ void Menu::showMenu() {
             m_display->print(" ");
 
         MenuComponent* child = m_currentMenu->getChildren()->get(i);
+        m_display->print(child->getDisplayValue());
         m_display->print(child->getName());
         yPos += LINE_HEIGHT;
     }
@@ -57,10 +58,10 @@ void Menu::selectEntry() {
     MenuComponent* selectedEntry = m_currentMenu->getSelectedComponent();
     if (selectedEntry->getChildCount() > 0) {
         m_currentMenu = selectedEntry;
-        showMenu();
     } else {
         selectedEntry->execute();
     }
+    showMenu();
 }
 
 void Menu::goBack() {
