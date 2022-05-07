@@ -31,7 +31,7 @@ enum LedMode : uint8_t {
 };
 
 struct Settings {
-    bool showNotesInDisplay = true;
+    bool showNotesInDisplay = false;
 } settings;
 
 MIDI_CREATE_DEFAULT_INSTANCE();
@@ -66,7 +66,8 @@ void handleNoteOn(byte channel, byte pitch, byte velocity) {
     } else {
         color = CRGB::Red;
         for (int i = 0; i < scales.getSelectedValue().length; i++) {
-            if ((correctedPitch % 12) == scales.getSelectedValue().notes[i]) {
+            uint8_t note = scales.getSelectedValue().notes[i] + baseNotes.getSelectedValue();
+            if ((correctedPitch - note) % 12 == 0) {
                 color = CRGB::Green;
                 break;
             }
