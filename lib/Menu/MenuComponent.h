@@ -5,7 +5,7 @@
 
 class MenuComponent {
    protected:
-    int m_selectedIndex = 0;
+    uint8_t m_selectedIndex = 0;
     const char* m_name;
     MenuComponent* m_parent;
 
@@ -21,7 +21,7 @@ class MenuComponent {
     MenuComponent* getParent() {
         return m_parent;
     };
-    int getSelectedIndex() {
+    uint8_t getSelectedIndex() {
         return m_selectedIndex;
     };
 
@@ -31,13 +31,13 @@ class MenuComponent {
     virtual MenuComponent* getSelectedComponent() {
         return nullptr;
     };
-    virtual int addChild(MenuComponent* child) {
+    virtual uint8_t addChild(MenuComponent* child) {
         return -1;
     };
-    virtual int moveCursor(int direction) {
+    virtual uint8_t moveCursor(int direction) {
         return -1;
     };
-    virtual int getChildCount() {
+    virtual uint8_t getChildCount() {
         return 0;
     };
     virtual const char* getDisplayValue() {
@@ -59,11 +59,11 @@ class SubMenu : public MenuComponent {
     MenuComponent* getSelectedComponent() {
         return m_children.get(m_selectedIndex);
     }
-    int getChildCount() {
+    uint8_t getChildCount() {
         return m_children.size();
     };
-    int addChild(MenuComponent* child);
-    int moveCursor(int direction);
+    uint8_t addChild(MenuComponent* child);
+    uint8_t moveCursor(int direction);
 };
 
 class Leaf : public MenuComponent {

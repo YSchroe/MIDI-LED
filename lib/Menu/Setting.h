@@ -15,26 +15,26 @@ class Setting {
     Setting(NamedValue<T> value) : m_value(value){};
 };
 
-template <typename T, int size>
+template <typename T, uint8_t size>
 class SettingGroup {
     NamedValue<T> m_options[size];
-    int m_selectedOption = 0;
+    uint8_t m_selectedOption = 0;
 
    public:
     SettingGroup(NamedValue<T> options[size]) {
-        for (int i = 0; i < size; i++) {
+        for (uint8_t i = 0; i < size; i++) {
             m_options[i] = options[i];
         }
     };
     SettingGroup(const char* values[size]) {
-        for (int i = 0; i < size; i++) {
-            m_options[i] = NamedValue<int>{values[i], i};
+        for (uint8_t i = 0; i < size; i++) {
+            m_options[i] = NamedValue<uint8_t>{values[i], i};
         }
     };
 
-    typedef void (SettingGroup<T, size>::*setting_func)(int);
+    typedef void (SettingGroup<T, size>::*setting_func)(uint8_t);
 
-    void selectOption(int index) {
+    void selectOption(uint8_t index) {
         m_selectedOption = index;
     }
 
@@ -44,7 +44,7 @@ class SettingGroup {
 
     SubMenu* createSettingsMenu(const char* name, std::function<void()> callback = nullptr) {
         SubMenu* menu = new SubMenu(name);
-        for (int i = 0; i < size; i++) {
+        for (uint8_t i = 0; i < size; i++) {
             menu->addChild(new Leaf(
                 m_options[i].name,
                 [this, callback, i]() {

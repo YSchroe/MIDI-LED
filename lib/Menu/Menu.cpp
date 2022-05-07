@@ -2,7 +2,6 @@
 
 #define LINE_HEIGHT 8
 
-// ==MENU==
 Menu::Menu(Adafruit_SSD1306* disp) : m_display(disp),
                                      m_menuTree("MAIN MENU"),
                                      m_currentMenu(&m_menuTree) {}
@@ -17,21 +16,26 @@ void Menu::showMainMenu() {
 }
 
 void Menu::showMenu() {
+    // clear display
     m_display->clearDisplay();
     m_display->setCursor(0, 0);
+
+    // display menu name
     m_display->print("==");
     m_display->print(m_currentMenu->getName());
     m_display->print("==");
 
+    // iterate over all menu items
     int yPos = LINE_HEIGHT;
-
     for (int i = 0; i < m_currentMenu->getChildCount(); i += 1) {
         m_display->setCursor(0, yPos);
+        // display cursor
         if (i == m_currentMenu->getSelectedIndex())
             m_display->print(">");
         else
             m_display->print(" ");
 
+        // display menu item name
         MenuComponent* child = m_currentMenu->getChildren()->get(i);
         m_display->print(child->getDisplayValue());
         m_display->print(child->getName());
@@ -56,11 +60,17 @@ void Menu::moveCursor(int direction) {
 
 void Menu::selectEntry() {
     MenuComponent* selectedEntry = m_currentMenu->getSelectedComponent();
+
     if (selectedEntry->getChildCount() > 0) {
+        // if selected item is submenu
         m_currentMenu = selectedEntry;
+
     } else {
+        // if selected item is leaf
         selectedEntry->execute();
     }
+
+    // rerender menu afterwards in any case, since leafs can change values
     showMenu();
 }
 
